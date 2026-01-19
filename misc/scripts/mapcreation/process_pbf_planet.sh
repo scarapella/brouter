@@ -3,7 +3,7 @@ set -e
 cd "$(dirname "$0")"
 DELETE_TEMP_FILES=true
 
-#PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
+PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
 FORCE_GENERATE=true
 DEBUG=true
 
@@ -60,6 +60,15 @@ mkdir nodetiles
 ${JAVA} -cp ${BROUTER_JAR} -DavoidMapPolling=true btools.mapcreator.OsmCutter ${BROUTER_PROFILES}/lookups.dat nodetiles ways.dat relations.dat restrictions.dat ${BROUTER_PROFILES}/all.brf ${PLANET_FILE}
 $RECURSE_FILES_CMD  || true
 
+for file in nodetiles/*.ntl; do
+    # Ensure we are only moving regular files
+    if [ -f "$file" ]; then
+        # ${file%.*} removes the shortest match of "." and everything after it
+        cp -- "$file" "${file%.*}.tls"
+    fi
+done
+$RECURSE_FILES_CMD  || true
+
 mkdir ftiles
 ${JAVA} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true btools.mapcreator.NodeFilter nodetiles ways.dat ftiles
 $RECURSE_FILES_CMD  || true
@@ -67,6 +76,14 @@ $RECURSE_FILES_CMD  || true
 ${JAVA} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true btools.mapcreator.RelationMerger ways.dat ways2.dat relations.dat ${BROUTER_PROFILES}/lookups.dat ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf
 $RECURSE_FILES_CMD  || true
 
+for file in ftiles/*.tls; do
+    # Ensure we are only moving regular files
+    if [ -f "$file" ]; then
+        # ${file%.*} removes the shortest match of "." and everything after it
+        cp -- "$file" "${file%.*}.ntl"
+        cp -- "$file" "${file%.*}.tlf"
+    fi
+done
 mkdir waytiles
 ${JAVA} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true btools.mapcreator.WayCutter ftiles ways2.dat waytiles
 $RECURSE_FILES_CMD  || true
