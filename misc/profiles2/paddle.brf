@@ -1,0 +1,49 @@
+---context:global   # following code refers to global config
+
+# the elevation parameters
+
+assign avoid_rapids        		= 4    	# %avoid_rapids% | Which what class of rapids (and above) to avoid | [0=all, 1=Class I+, 2=Class II+, 3=Classs III+, 4=Class IV+, 5=Class V+]
+assign avoid_open_water			= 0		# %avoid_open_water% | Avoid open water? |[0=do not avoid, 1=prefer to avoid, 2=avoid at all costs]
+assign avoid_intermittent		= 2		# %avoid_intermittent% | Avoid intermittent water? |[0=do not avoid, 1=prefer to avoid, 2=avoid at all costs]
+assign avoid_stream				= true	# %avoid_stream% | Avoid streams (excet when canoeing is explictly allowed) | boolean
+
+assign use_portage_cart			= true	# %use_portage_cart% | Will you use a portage cart? | boolean
+
+assign strict_positive_access	= false	# %strict_positive_access% | Only go where  canoe and portage are explicitly allowed? | boolean
+
+assign add_beeline         		= false  # %add_beeline% | Enable beeline on distant start/end points | boolean
+
+assign downhillcost 0
+assign downhillcutoff 0
+assign uphillcost 0
+assign uphillcutoff 0
+
+## for debugging
+assign processUnusedTags = true
+---context:way   # following code refers to way-tags
+
+assign turncost 0
+assign initialcost 0
+
+assign costfactor
+  switch or canoe=no
+      or canoe=discouraged
+	  or boat=no
+	  or boat=discouraged
+	  or access=no
+      or rapids=3
+	  or rapids=4
+	  or rapids=5
+      access=private
+      100000000
+  switch or waterway=canal
+	  or waterway=river
+	  or waterway=fairway
+	  or waterway=link
+      or waterway=flowline
+	  waterway=canoe_pass	10
+  switch not highway=		50   100000
+
+---context:node  # following code refers to node tags
+
+assign initialcost 0
