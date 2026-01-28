@@ -986,6 +986,16 @@ waterway;0000000001 rapids
 waterway;0000000001 access_point
 waterway;0000000001 dam
 
+rapids;0000000001 no A B C 0
+rapids;0000000001 yes
+rapids;0000000001 1 1+ 1- I  1;0
+rapids;0000000001 2 2+ 2- II 1;2 2;1
+rapids;0000000001 3 3+ 3- III 2;3 3;2
+rapids;0000000001 4 4+ 4- IV 3;4 4;3
+rapids;0000000001 5 5+ 5- V 4;5 5;4
+rapids;0000000001 6 6+ VI 5;6 6;5
+rapids;0000000001 X 5;X 6;X X;5 X;6
+
 canoe;0000000001 no
 canoe;0000000001 yes
 canoe;0000000001 private
@@ -994,6 +1004,15 @@ canoe;0000000001 customers
 canoe;0000000001 permissive
 canoe;0000000001 designated
 canoe;0000000001 discouraged
+
+boat;0000000001 no
+boat;0000000001 yes
+boat;0000000001 private
+boat;0000000001 permissive
+boat;0000000001 designated
+boat;0000000001 discouraged
+boat;0000000001 unknown
+boat;0000000001 permit
 
 noexit;0000195286 yes
 
