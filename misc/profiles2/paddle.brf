@@ -130,7 +130,6 @@ assign portageaccess
 
 
 #######  todo: make this more sophisticated
-### todo: add smoothness
 ### todo: add tracktype?
 assign hand_cartableway
   if portageableway then
@@ -138,6 +137,7 @@ assign hand_cartableway
 	if hand_cartspecified then true
 	else if hand_cart=no then false
 	else if highway=steps then false
+	else if smoothness=very_horrible|impassable then false
 	else if and highway=path|footway motor_vehicle=yes|designated|permissive|agricultural then true 
 	else if highway=path|footway then false
 	else true
@@ -149,6 +149,7 @@ assign usinghand_cart
   else false
 
 #### todo: add elevation penalty
+#### todo: add smoothness penalty when using hand_cart
 #### todo: add culvert penalty? 
 #### todo: do we care about cost of portage down stream?
 #### todo: add in preference for portage and/or canoe routes?  psuedo-tags aren't extracted, do they existing in underlying pbf?
@@ -261,3 +262,5 @@ assign initialcost
   else if not node then 1000000
   else 0
 
+############################## outliers to check #############################################
+# https://www.openstreetmap.org/way/59446028#map=19/44.884379/-79.674924
