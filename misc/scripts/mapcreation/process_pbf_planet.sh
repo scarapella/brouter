@@ -3,9 +3,27 @@ set -e
 cd "$(dirname "$0")"
 DELETE_TEMP_FILES=true
 
-PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
+if [[ -z "${1// }" ]]; 
+	then echo "Usage ./process_pbf_plant <filename>" >&2 
+	exit 1 
+fi
+
+#PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
+#PLANET_FILE=$(realpath "./ontario-latest.osm.pbf")
+#PLANET_FILE=$(realpath "./minnesota-latest.osm.pbf")
+#PLANET_FILE=$(realpath "./rhone-alpes-latest.osm.pbf")
+
+PLANET_FILE=$(realpath "./$1")
+
+if [[ ! -f "$PLANET_FILE" ]]; 
+	then echo "Error: planet file '$PLANET_FILE' not found" >&2 
+	exit 1 
+fi
+
 FORCE_GENERATE=true
-DEBUG=true
+DEBUG=false
+set -x
+
 
 #if debug is set to true then enable bash debug mode
 if [ "$DEBUG" == "true" ]; then
@@ -51,7 +69,7 @@ PLANET_FILE=${PLANET_FILE:-$(realpath "./planet-latest.osm.pbf")}
 # https://cgiarcsi.community/data/srtm-90m-digital-elevation-database-v4-1/
 # (use the "ArcInfo ASCII" version) and put the ZIP files directly in this
 # folder:
-SRTM_PATH="/private-backup/srtm"
+SRTM_PATH=$(realpath "./srtm/")
 
 rm -rf tmp
 mkdir tmp
