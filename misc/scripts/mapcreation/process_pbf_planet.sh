@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 cd "$(dirname "$0")"
-DELETE_TEMP_FILES=true
+DELETE_TMP_FILES=true
 
-if [[ -z "${1// }" ]]; 
-	then echo "Usage ./process_pbf_plant <filename>" >&2 
-	exit 1 
+if [[ -z "${1// }" ]];
+	then echo "Usage ./process_pbf_plant <filename>" >&2
+	exit 1
 fi
 
 #PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
@@ -15,9 +15,9 @@ fi
 
 PLANET_FILE=$(realpath "./$1")
 
-if [[ ! -f "$PLANET_FILE" ]]; 
-	then echo "Error: planet file '$PLANET_FILE' not found" >&2 
-	exit 1 
+if [[ ! -f "$PLANET_FILE" ]];
+	then echo "Error: planet file '$PLANET_FILE' not found" >&2
+	exit 1
 fi
 
 FORCE_GENERATE=true
