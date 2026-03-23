@@ -3,22 +3,16 @@ set -e
 cd "$(dirname "$0")"
 DELETE_TMP_FILES=true
 
-if [[ -z "${1// }" ]];
-	then echo "Usage ./process_pbf_plant <filename>" >&2
-	exit 1
-fi
-
-#PLANET_FILE=$(realpath "./maine-latest.osm.pbf")
-#PLANET_FILE=$(realpath "./ontario-latest.osm.pbf")
-#PLANET_FILE=$(realpath "./minnesota-latest.osm.pbf")
-#PLANET_FILE=$(realpath "./rhone-alpes-latest.osm.pbf")
-
-PLANET_FILE=$(realpath "./$1")
-
+PLANET_FILE="${PLANET_FILE:-${1// }}"
 if [[ ! -f "$PLANET_FILE" ]];
 	then echo "Error: planet file '$PLANET_FILE' not found" >&2
 	exit 1
 fi
+PLANET_FILE=$(realpath "$PLANET_FILE")
+
+echo $PLANET_FILE
+
+
 
 FORCE_GENERATE=true
 DEBUG=false
@@ -58,7 +52,8 @@ touch lastmaprun.date
 
 rm -rf /var/www/brouter/segments4_lastrun
 
-JAVA='java -Xmx2600m -Xms2600m -Xmn32m'
+#JAVA='java -Xmx2600m -Xms2600m -Xmn32m'
+JAVA='java -Xmx6400m -Xms2600m -Xmn32m'
 
 BROUTER_PROFILES=$(realpath "../../profiles2")
 

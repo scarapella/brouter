@@ -20,3 +20,16 @@ misc/customprofiles
 .classpath
 .project
 !/.idea/runConfigurations
+#brouter-codec
+#brouter-map-creator/bin
+#brouter-core/bin
+#brouter-expressions/bin
+#brouter-mapaccess/bin
+#brouter-server/bin
+#brouter-util/bin
+#brouter-android/bin
+build/
+bin/
+tmp/
+srtm/
+*.pbf
