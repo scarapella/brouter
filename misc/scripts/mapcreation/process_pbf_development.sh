@@ -3,11 +3,13 @@ set -e
 cd "$(dirname "$0")"
 
 OUTPUT_DIR=""
+JAVA_ARGS=""
 PLANET_FILE_ARG=""
+AVOID_MAP_POLLING=false
 
 usage() {
-  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] <planet-file>" >&2
-  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ planet-latest.osm.pbf" >&2
+  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-poling] <planet-file>" >&2
+  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-poling planet-latest.osm.pbf" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -21,8 +23,25 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
+    --avoid-map-poling)
+      AVOID_MAP_POLLING=true
+      shift
+      ;;
     --output-dir=*)
       OUTPUT_DIR="${1#*=}"
+      shift
+      ;;
+    --java-args)
+      if [[ -z "$2" || "$2" == --* ]]; then
+        echo "Error: --java-args requires Java arguments" >&2
+        usage
+        exit 1
+      fi
+      JAVA_ARGS="$2"
+      shift 2
+      ;;
+    --java-args=*)
+      JAVA_ARGS="${1#*=}"
       shift
       ;;
     -h|--help)
@@ -94,7 +113,10 @@ fi
 
 #rm -rf /var/www/brouter/segments4_lastrun
 
-JAVA='java -Xmx6144M -Xms6144M -Xmn256M'
+if [[ -z "$JAVA_ARGS" ]]; then
+  JAVA_ARGS='-Xmx6144M -Xms6144M -Xmn256M'
+fi
+JAVA="java $JAVA_ARGS"
 
 BROUTER_PROFILES=$(realpath "../../profiles2")
 
@@ -125,11 +147,11 @@ mkdir waytiles
 mkdir waytiles55
 mkdir nodes55
 
-${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=true  btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat  relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
+${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING}  btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat  relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
 $RECURSE_FILES_CMD  || true
 
 mkdir unodes55
-${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true btools.util.StackSampler btools.mapcreator.PosUnifier nodes55 unodes55 bordernids.dat bordernodes.dat ${SRTM_PATH}
+${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING} btools.util.StackSampler btools.mapcreator.PosUnifier nodes55 unodes55 bordernids.dat bordernodes.dat ${SRTM_PATH}
 $RECURSE_FILES_CMD  || true
 
 mkdir segments
