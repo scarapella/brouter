@@ -7,6 +7,7 @@ touch mapsnapshpttime.txt
 ./osmupdate --verbose --drop-author --compression-level=1 planet-latest.osm.pbf planet-new.osm.pbf &
 
 rm -rf tmp
+
 mkdir tmp
 cd tmp
 mkdir nodetiles
