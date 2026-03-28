@@ -1,0 +1,35 @@
+---context:global   # following code refers to global config
+#constants
+
+assign avoid_small_waterways	= false			# %avoid_small_waterways% | Avoid streams, ditches, and drains (except when canoeing is explictly allowed)? | boolean
+
+assign add_beeline         		= false  		# %add_beeline% | Enable beeline on distant start/end points | boolean
+
+
+## for debugging
+assign processUnusedTags		  = true
+
+# the elevation parameters
+assign downhillcost 	0
+assign downhillcutoff 0
+assign uphillcost 		0
+assign uphillcutoff 	0
+
+#todo: this sets some variables for foot (mostly limit speed I think). using it helps the time calculation but should be done properly for paddling
+assign validForFoot 	1
+
+---context:way   # following code refers to way-tags
+
+assign initialcost 0
+assign turncost 0
+
+assign waterway
+  if waterway=river|flowline|fairway|link|canal|canoe_pass|tidal_channel then true
+  else if and waterway=stream|ditch|drain  not avoid_small_waterways then true
+  else false
+
+assign costfactor
+  switch  waterway 1 100000
+
+---context:node  # following code refers to node tags
+assign initialcost 0
