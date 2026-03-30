@@ -488,15 +488,15 @@ incline;0000000779 steep
 incline;0000000861 3% 0 1 2 3 0% 1% 2% 3%
 incline;0000000724 5% 4 5 4%
 incline;0000000530 8% 6 7 8 6% 7%
-incline;0000003109 10% 9 10 9% 10 
+incline;0000003109 10% 9 10 9% 10
 incline;0000001297 15% 11 12 13 14 15 11% 12% 13% 14%
-incline;0000000997 20% 16 17 18 19 20 16% 17% 18% 19% 10 
+incline;0000000997 20% 16 17 18 19 20 16% 17% 18% 19% 10
 incline;0000000409 25% 21 22 23 24 25 21% 22% 23% 24%
 incline;0000000263 30% 30 40 50 40% 50% 35%
 incline;0000000861 -3% -1 -2 -3 -1% -2% -3%
 incline;0000000724 -5% -4 -5 -4%
 incline;0000000530 -8% -6 -7 -8 -6% -7%
-incline;0000001515 -10% -9 -10 -9% -10 
+incline;0000001515 -10% -9 -10 -9% -10
 incline;0000001297 -15% -11 -12 -13 -14 -15 -11% -12% -13% -14%
 incline;0000000997 -20% -16 -17 -18 -19 -20 -16% -17% -18% -19%
 incline;0000000409 -25% -21 -22 -23 -24 -25 -21% -22% -23% -24%
@@ -1128,6 +1128,17 @@ canoe;0000000001 customers
 canoe;0000000001 permissive
 canoe;0000000001 designated
 canoe;0000000001 discouraged
+canoe:egress;0000000001 yes
+canoe:egress;0000000001 designated
+canoe:egress;0000000001 permissive
+canoe:egress;0000000001 customers
+canoe:egress;0000000001 permit
+canoe:put_in;0000000001 yes
+canoe:put_in;0000000001 designated
+canoe:put_in;0000000001 permissive
+canoe:put_in;0000000001 customers
+canoe:put_in;0000000001 permit
+
 
 boat;0000000001 no
 boat;0000000001 yes

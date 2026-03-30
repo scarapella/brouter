@@ -210,7 +210,9 @@ assign defaultaccess =
 #designated access calculated seperately so we can use it for weighting as well
 #	todo: is this the right behavior for permissive and/or customers?
 assign canoespecified
-  switch canoe=yes|designated|permit|permissive|customers true false
+  switch canoe:egress=yes|permit|designated|permissive|customers
+  or canoe:put_in=yes|permit|designated|permissive|customers
+  or canoe=yes|designated|permit|permissive|customers true false
 assign boatspecified
   switch boat=yes|designated|permit|permissive true false
 #assign portagespecified
