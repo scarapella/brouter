@@ -246,8 +246,8 @@ assign effective_rapids
 assign node =
   # preferences must go before access as they override access
   if greater effective_rapids max_preferred_rapids then false #treat rapids greater than given preference as no canoe access
-  else if waterway=waterfall then false # should canoespecified take precidence over waterfall?
-  else if canoespecified then true
+  else if canoespecified then true # we assume canoe specified takes precidence over all 
+  else if and waterway=waterfall not way:canoespecified  then false # do read the way for waterfall as very often mark rapids as falls. so it's worth it in this narrow case
   else if canoe=no|discouraged|private then false
   else if boatspecified then true
   else if boat=no|discouraged|private then false
