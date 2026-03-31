@@ -114,7 +114,9 @@ fi
 #rm -rf /var/www/brouter/segments4_lastrun
 
 if [[ -z "$JAVA_ARGS" ]]; then
-  JAVA_ARGS='-Xmx6144M -Xms6144M -Xmn256M'
+#  JAVA_ARGS='-Xmx6144M -Xms6144M -Xmn256M'
+  #for now, no args is honestly better
+  JAVA_ARGS=''
 fi
 JAVA="java $JAVA_ARGS"
 
