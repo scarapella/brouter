@@ -109,7 +109,7 @@ assign canoeaccess =
   else if boat=no|discouraged|private then false
   else defaultaccess
 
-######## todo: make this suck less?
+######## todo: refine portageable ways better
 assign portageableway
   if not highway= then
   (
@@ -131,7 +131,6 @@ assign portageaccess
   else defaultaccess
 
 
-### todo: add tracktype?
 assign hand_cartableway
   if portageableway then
   (
@@ -151,9 +150,7 @@ assign usinghand_cart
 
 #### todo: add elevation penalty
 #### todo: add smoothness penalty when using hand_cart
-#### todo: add culvert penalty?
-#### todo: do we care about cost of portage down stream?
-#### todo: add in preference for portage and/or canoe route relations. Have not done so far as  psuedo-tags aren't extracted. Not sure if issue in in PBF or in extraction?
+#### todo: add in preference for portage and/or canoe route relations.
 assign accesspenalty
   add switch and portageableway informal=yes 2 0
   add switch and portageableway portagespecified  -1 0
@@ -211,7 +208,6 @@ assign defaultaccess =
   else true
 
 #designated access calculated seperately so we can use it for weighting as well
-#	todo: is this the right behavior for permissive and/or customers?
 assign canoespecified
   switch canoe:egress=yes|permit|designated|permissive|customers
   or canoe:put_in=yes|permit|designated|permissive|customers
@@ -265,6 +261,3 @@ assign initialcost
   if ignore_node_access then 0
   else if not node then 1000000
   else 0
-
-############################## outliers to check #############################################
-# https://www.openstreetmap.org/way/59446028#map=19/44.884379/-79.674924
