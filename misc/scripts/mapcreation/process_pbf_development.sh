@@ -6,10 +6,11 @@ OUTPUT_DIR=""
 JAVA_ARGS=""
 PLANET_FILE_ARG=""
 AVOID_MAP_POLLING=false
+SRTM_PATH=$(realpath "./srtm3_bef/")
 
 usage() {
-  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] <planet-file>" >&2
-  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling planet-latest.osm.pbf" >&2
+  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] [--bef_dir <directory>] <planet-file>" >&2
+  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling --bef-dir ../../srtm3_bef/planet-latest.osm.pbf" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -29,6 +30,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output-dir=*)
       OUTPUT_DIR="${1#*=}"
+      shift
+      ;;
+    --bef-dir=*)
+      SRTM_PATH="${1#*=}"
       shift
       ;;
     --java-args)
@@ -139,7 +144,7 @@ echo  "Using Brouter jar file '$BROUTER_JAR'"
 # https://cgiarcsi.community/data/srtm-90m-digital-elevation-database-v4-1/
 # (use the "ArcInfo ASCII" version) and put the ZIP files directly in this
 # folder:
-SRTM_PATH=$(realpath "./srtm/")
+#SRTM_PATH=$(realpath "./srtm3_bef/")
 
 rm -rf tmp
 mkdir tmp
