@@ -8,8 +8,8 @@ PLANET_FILE_ARG=""
 AVOID_MAP_POLLING=false
 
 usage() {
-  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-poling] <planet-file>" >&2
-  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-poling planet-latest.osm.pbf" >&2
+  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] <planet-file>" >&2
+  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling planet-latest.osm.pbf" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
-    --avoid-map-poling)
+    --avoid-map-polling)
       AVOID_MAP_POLLING=true
       shift
       ;;
