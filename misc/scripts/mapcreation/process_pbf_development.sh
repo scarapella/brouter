@@ -6,7 +6,7 @@ OUTPUT_DIR=""
 JAVA_ARGS=""
 PLANET_FILE_ARG=""
 AVOID_MAP_POLLING=false
-SRTM_PATH=$(realpath "./srtm3_bef/")
+SRTM_PATH="./srtm3_bef/"
 
 usage() {
   echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] [--bef_dir <directory>] <planet-file>" >&2
@@ -81,6 +81,7 @@ if [[ -z "$PLANET_FILE_ARG" ]]; then
   exit 1
 fi
 
+SRTM_PATH=$(realpath "$SRTM_PATH")
 PLANET_FILE=$(realpath "./$PLANET_FILE_ARG")
 
 if [[ ! -f "$PLANET_FILE" ]];
