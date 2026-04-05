@@ -9,8 +9,8 @@ AVOID_MAP_POLLING=false
 SRTM_PATH="./srtm3_bef/"
 
 usage() {
-  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] [--bef_dir <directory>] <planet-file>" >&2
-  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling --bef-dir ../../srtm3_bef/planet-latest.osm.pbf" >&2
+  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] [--srtm-dir <directory>] <planet-file>" >&2
+  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling --srtm-dir ../../srtm_bef3/ planet-latest.osm.pbf" >&2
 }
 
 while [[ $# -gt 0 ]]; do
