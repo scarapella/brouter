@@ -2,7 +2,8 @@
 set -e
 cd "$(dirname "$0")"
 
-JAVA='java -Xmx6144M -Xms6144M -Xmn256M'
+#JAVA='java -Xmx6144M -Xms6144M -Xmn256M'
+JAVA='java '
 
 BROUTER_PROFILES=$(realpath "../../profiles2")
 
