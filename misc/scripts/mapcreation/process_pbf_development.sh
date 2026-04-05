@@ -24,13 +24,18 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
-    --avoid-map-polling)
-      AVOID_MAP_POLLING=true
-      shift
-      ;;
     --output-dir=*)
       OUTPUT_DIR="${1#*=}"
       shift
+      ;;
+    --bef-dir)
+      if [[ -z "$2" || "$2" == --* ]]; then
+        echo "Error: --bef-dir requires a directory path" >&2
+        usage
+        exit 1
+      fi
+      SRTM_PATH="$2"
+      shift 2
       ;;
     --bef-dir=*)
       SRTM_PATH="${1#*=}"
@@ -47,6 +52,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --java-args=*)
       JAVA_ARGS="${1#*=}"
+      shift
+      ;;
+    --avoid-map-polling)
+      AVOID_MAP_POLLING=true
       shift
       ;;
     -h|--help)
