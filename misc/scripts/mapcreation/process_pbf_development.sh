@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="${1#*=}"
       shift
       ;;
-    --bef-dir)
+    --srtm-dir)
       if [[ -z "$2" || "$2" == --* ]]; then
         echo "Error: --bef-dir requires a directory path" >&2
         usage
@@ -37,7 +37,7 @@ while [[ $# -gt 0 ]]; do
       SRTM_PATH="$2"
       shift 2
       ;;
-    --bef-dir=*)
+    --srtm-dir=*)
       SRTM_PATH="${1#*=}"
       shift
       ;;
