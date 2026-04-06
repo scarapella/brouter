@@ -1,2 +1,2 @@
 set -x
-gcloud storage cp ./tmp/segments/* gs://brouter-segments4/segments4/
+gcloud storage cp ./tmp/segments/* gs://na-ne2-brouter-segments/segments4/
