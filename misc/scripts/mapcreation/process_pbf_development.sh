@@ -7,10 +7,19 @@ JAVA_ARGS=""
 PLANET_FILE_ARG=""
 AVOID_MAP_POLLING=false
 SRTM_PATH="./srtm3_bef/"
+TMP_BACKUP_DIR=""
+DELETE_TMP_FILES=true
+
 
 usage() {
-  echo "Usage: ./process_pbf_development.sh [--output-dir <directory>] [--java-args <args>] [--avoid-map-polling] [--srtm-dir <directory>] <planet-file>" >&2
-  echo "       ./process_pbf_development.sh --output-dir ../../segments4/ --java-args '-Xmx8G -Xms4G' --avoid-map-polling --srtm-dir ../../srtm_bef3/ planet-latest.osm.pbf" >&2
+  echo "" >&2
+  echo "Usage: process_pbf_development.sh <planet-file> [options...]" >&2
+  echo "--output-dir <directory>     Location to store the .rd5 segment files" >&2
+  echo "--java-args <args>           Java arguments to pass to the Brouter processes">&2
+  echo "--avoid-map-polling          Avoid polling of files, (necessary for small pbf files)">&2
+  echo "--srtm-dir <directory>       Directory containing SRTM data" >&2
+  echo "--tmp-backup-dir <directory> Used to store tmp files in a persistent place for resuming processing" >&2
+  echo "--help                       Show this help message" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -28,9 +37,22 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="${1#*=}"
       shift
       ;;
+    --tmp-backup-dir)
+      if [[ -z "$2" || "$2" == --* ]]; then
+        echo "Error: --tmp-backup-dir requires a directory path" >&2
+        usage
+        exit 1
+      fi
+      TMP_BACKUP_DIR="$2"
+      shift 2
+      ;;
+    --tmp-backup-dir=*)
+      TMP_BACKUP_DIR="${1#*=}"
+      shift
+      ;;
     --srtm-dir)
       if [[ -z "$2" || "$2" == --* ]]; then
-        echo "Error: --bef-dir requires a directory path" >&2
+        echo "Error: --srtm-dir requires a directory path" >&2
         usage
         exit 1
       fi
@@ -56,6 +78,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --avoid-map-polling)
       AVOID_MAP_POLLING=true
+      shift
+      ;;
+    --force-failure)
+      FORCE_FAILURE=true
       shift
       ;;
     -h|--help)
@@ -89,44 +115,7 @@ if [[ ! -f "$PLANET_FILE" ]];
 	exit 1
 fi
 
-DELETE_TMP_FILES=true
-FORCE_GENERATE=true
-DEBUG=false
-set -x
 
-
-#if debug is set to true then enable bash debug mode
-if [ "$DEBUG" == "true" ]; then
-    set -x
-    FORCE_GENERATE=true
-    DELETE_TMP_FILES=false
-    RECURSE_FILES_CMD="ls -lR"
-
-fi
-
-# Fetch OSM planet dump if no planet file is specified
-# if [ -z "$PLANET_FILE" ]; then
-#     echo "Fetching OSM planet dump"
-#     if [ -x "$(command -v osmupdate)" ] && [[ -f "./planet-latest.osm.pbf" ]]; then
-#         # Prefer running osmupdate to update the planet file if available
-#         mv "./planet-latest.osm.pbf" "./planet-latest.old.osm.pbf"
-#         osmupdate "planet-latest.old.osm.pbf" "./planet-latest.osm.pbf"
-#         rm "./planet-latest.old.osm.pbf"
-#     else
-#         # Otherwise, download it again
-#         wget -N http://planet.openstreetmap.org/pbf/planet-latest.osm.pbf
-#     fi
-# fi
-
-# if [ "$FORCE_GENERATE" != "true" ]; then
-#     if test lastmaprun.date -nt planet-latest.osm.pbf; then
-#     echo "no osm update, exiting"
-#     exit 0
-#     fi
-# fi
-# touch lastmaprun.date
-
-#rm -rf /var/www/brouter/segments4_lastrun
 
 if [[ -z "$JAVA_ARGS" ]]; then
 #  JAVA_ARGS='-Xmx6144M -Xms6144M -Xmn256M'
@@ -138,8 +127,7 @@ JAVA="java $JAVA_ARGS"
 BROUTER_PROFILES=$(realpath "../../profiles2")
 
 BROUTER_JAR=$(realpath $(ls ../../../brouter-server/build/libs/brouter-*-all.jar) || true)
-if [[ ! -f "$BROUTER_JAR" ]];
-	then echo "Error: Brouter jar file '$BROUTER_JAR' not found" >&2
+if [[ ! -f "$BROUTER_JAR" ]]; then 
     BROUTER_JAR=$(realpath /brouter.jar)
 fi
 if [[ ! -f "$BROUTER_JAR" ]];
@@ -148,32 +136,111 @@ if [[ ! -f "$BROUTER_JAR" ]];
 fi
 echo  "Using Brouter jar file '$BROUTER_JAR'"
 
-#PLANET_FILE=${PLANET_FILE:-$(realpath "./planet-latest.osm.pbf")}
 
-# Download SRTM zip files from
-# https://cgiarcsi.community/data/srtm-90m-digital-elevation-database-v4-1/
-# (use the "ArcInfo ASCII" version) and put the ZIP files directly in this
-# folder:
-#SRTM_PATH=$(realpath "./srtm3_bef/")
+# Setup checkpoint file
+CHECKPOINT_FILE=".process_pbf_checkpoint"
+TODAY=$(date +%Y-%m-%d)
 
-rm -rf tmp
-mkdir tmp
+# Convert TMP_BACKUP_DIR to absolute path if provided and scope by date
+if [[ -n "$TMP_BACKUP_DIR" ]]; then
+    TMP_BACKUP_DIR=$(realpath "$TMP_BACKUP_DIR")
+    TMP_BACKUP_DIR_DATED="${TMP_BACKUP_DIR}/${TODAY}"
+    mkdir -p "$TMP_BACKUP_DIR_DATED"
+    echo "Using backup directory: $TMP_BACKUP_DIR_DATED"
+fi
+
+# Initialize or resume from checkpoint
+if [[ ! -d tmp ]]; then
+    mkdir tmp
+fi
+
+# If backup directory exists for today, restore from it first
+if [[ -n "$TMP_BACKUP_DIR_DATED" && -d "$TMP_BACKUP_DIR_DATED" ]]; then
+    echo "=== Found backup directory for ${TODAY}, restoring tmp data ==="
+    rsync -a "$TMP_BACKUP_DIR_DATED/" tmp/
+    echo "=== Restore complete ==="
+fi
+
 cd tmp
-mkdir nodetiles
-mkdir waytiles
-mkdir waytiles55
-mkdir nodes55
 
-${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING}  btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat  relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
-$RECURSE_FILES_CMD  || true
+# Read checkpoint and validate date
+CHECKPOINT_DATA=$(cat "../$CHECKPOINT_FILE" 2>/dev/null || echo "$TODAY 0")
+CHECKPOINT_DATE=$(echo "$CHECKPOINT_DATA" | awk '{print $1}')
+CHECKPOINT=$(echo "$CHECKPOINT_DATA" | awk '{print $2}')
 
-mkdir unodes55
-${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING} btools.util.StackSampler btools.mapcreator.PosUnifier nodes55 unodes55 bordernids.dat bordernodes.dat ${SRTM_PATH}
-$RECURSE_FILES_CMD  || true
+# If checkpoint is from a different day, reset to 0
+if [[ "$CHECKPOINT_DATE" != "$TODAY" ]]; then
+    echo "=== Checkpoint from $CHECKPOINT_DATE is expired. Starting fresh. ==="
+    CHECKPOINT=0
+    echo "$TODAY 0" > "../$CHECKPOINT_FILE"
+else
+    echo "=== Resuming from checkpoint: step $CHECKPOINT ==="
+fi
 
-mkdir segments
-${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -DuseDenseMaps=true -DskipEncodingCheck=true btools.util.StackSampler btools.mapcreator.WayLinker unodes55 waytiles55 bordernodes.dat restrictions.dat ${BROUTER_PROFILES}/lookups.dat ${BROUTER_PROFILES}/all.brf segments rd5
-$RECURSE_FILES_CMD  || true
+# Step 1: OsmFastCutter
+if [[ "$CHECKPOINT" -lt 1 ]]; then
+    echo "=== Running Step 1: OsmFastCutter ==="
+    mkdir -p nodetiles waytiles waytiles55 nodes55
+
+    ${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING}  btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat  relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
+
+    # Backup tmp directory if TMP_BACKUP_DIR is set
+    if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
+        echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
+        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        echo "=== Backup complete ==="
+    fi
+
+    echo "$TODAY 1" > "../$CHECKPOINT_FILE"
+    echo "=== Step 1 completed: OsmFastCutter ==="
+    if [[ "$FORCE_FAILURE" == "true" ]]; then
+        exit 1
+    fi
+else
+    echo "=== Skipping Step 1: OsmFastCutter (already completed) ==="
+fi
+
+  # Step 2: PosUnifier
+if [[ "$CHECKPOINT" -lt 2 ]]; then
+    echo "=== Running Step 2: PosUnifier ==="
+    mkdir -p unodes55
+
+    ${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING} btools.util.StackSampler btools.mapcreator.PosUnifier nodes55 unodes55 bordernids.dat bordernodes.dat ${SRTM_PATH}
+
+    # Backup tmp directory if TMP_BACKUP_DIR is set
+    if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
+        echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
+        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        echo "=== Backup complete ==="
+    fi
+
+    echo "$TODAY 2" > "../$CHECKPOINT_FILE"
+    echo "=== Step 2 completed: PosUnifier ==="
+else
+    echo "=== Skipping Step 2: PosUnifier (already completed) ==="
+fi
+
+# Step 3: WayLinker
+if [[ "$CHECKPOINT" -lt 3 ]]; then
+    echo "=== Running Step 3: WayLinker ==="
+    mkdir -p segments
+
+    ${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -DuseDenseMaps=true -DskipEncodingCheck=true btools.util.StackSampler btools.mapcreator.WayLinker unodes55 waytiles55 bordernodes.dat restrictions.dat ${BROUTER_PROFILES}/lookups.dat ${BROUTER_PROFILES}/all.brf segments rd5
+
+    # Backup tmp directory if TMP_BACKUP_DIR is set
+    if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
+        echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
+        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        echo "=== Backup complete ==="
+    fi
+
+    echo "$TODAY 3" > "../$CHECKPOINT_FILE"
+    echo "=== Step 3 completed: WayLinker ==="
+else
+    echo "=== Skipping Step 3: WayLinker (already completed) ==="
+fi
+
+echo "=== All processing steps completed ==="
 
 cd ..
 
@@ -189,10 +256,13 @@ if [[ -n "$OUTPUT_DIR" ]]; then
   }
 fi
 
-#rm -rf segments
-#mv tmp/segments segments
-#cp /var/www/brouter/segments4/.htaccess segments
-#cp /var/www/brouter/segments4/storageconfig.txt segments
-#mv /var/www/brouter/segments4 /var/www/brouter/segments4_lastrun
-#mv segments /var/www/brouter/segments4
-#rm -rf tmp
+# Clean up checkpoint file after successful completion
+rm -f "$CHECKPOINT_FILE"
+
+# Clean up backup directory if it was used
+if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
+    echo "Cleaning up backup directory: $TMP_BACKUP_DIR_DATED"
+    rm -rf "$TMP_BACKUP_DIR_DATED"
+fi
+
+echo "Process completed successfully."
