@@ -141,10 +141,11 @@ echo  "Using Brouter jar file '$BROUTER_JAR'"
 CHECKPOINT_FILE=".process_pbf_checkpoint"
 TODAY=$(date +%Y-%m-%d)
 
-# Convert TMP_BACKUP_DIR to absolute path if provided and scope by date
+# Convert TMP_BACKUP_DIR to absolute path if provided and scope by planet file and date
 if [[ -n "$TMP_BACKUP_DIR" ]]; then
     TMP_BACKUP_DIR=$(realpath "$TMP_BACKUP_DIR")
-    TMP_BACKUP_DIR_DATED="${TMP_BACKUP_DIR}/${TODAY}"
+    PLANET_FILENAME=$(basename "$PLANET_FILE")
+    TMP_BACKUP_DIR_DATED="${TMP_BACKUP_DIR}/${PLANET_FILENAME}/${TODAY}"
     mkdir -p "$TMP_BACKUP_DIR_DATED"
     echo "Using backup directory: $TMP_BACKUP_DIR_DATED"
 fi
