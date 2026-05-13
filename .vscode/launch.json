@@ -66,7 +66,7 @@
             "mainClass": "btools.mapcreator.NodeFilter",
             "projectName": "brouter-map-creator",
             "vmArgs": "-Xmx2600m -Xms2600m -Xmn32m -Ddeletetmpfiles=false -DuseDenseMaps=true",
-            "args": "/home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/nodetiles /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/ways.dat /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/ftiles"
+            "args": "/home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/nodetiles /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/ways.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/ftiles"
         },
         {
             "type": "java",
@@ -75,14 +75,16 @@
             "mainClass": "btools.mapcreator.OsmCutter",
             "projectName": "brouter-map-creator",
             "vmArgs": "-Xmx2600m -Xms2600m -Xmn32m -DavoidMapPolling=true",
-            "args": "/home/scarapella/dev/brouter/brouter-master/misc/profiles2/lookups.dat /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/nodetiles /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/ways.dat /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/relations.dat /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/restrictions.dat /home/scarapella/dev/brouter/brouter-master/misc/profiles2/all.brf /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/maine-latest.osm.pbf"
+            "args": "/home/scarapella/dev/brouter/brouter/misc/profiles2/lookups.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/nodetiles /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/ways.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/relations.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/restrictions.dat /home/scarapella/dev/brouter/brouter/misc/profiles2/all.brf /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/maine-latest.osm.pbf"
         },
         {
             "type": "java",
             "name": "OsmFastCutter",
             "request": "launch",
             "mainClass": "btools.mapcreator.OsmFastCutter",
-            "projectName": "brouter-map-creator"
+            "projectName": "brouter-map-creator",
+            "vmArgs": " -Ddeletetmpfiles=true -DuseDenseMaps=true -DavoidMapPolling=true",
+            "args": "/home/scarapella/dev/brouter/brouter/misc/profiles2/lookups.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/nodetiles /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/waytiles /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/nodes55 /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/waytiles55 /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/bordernids.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/relations.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/restrictions.dat /home/scarapella/dev/brouter/brouter/misc/profiles2/all.brf /home/scarapella/dev/brouter/brouter/misc/profiles2/trekking.brf /home/scarapella/dev/brouter/brouter/misc/profiles2/softaccess.brf /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/maine-latest.osm.pbf"
         },
         {
             "type": "java",
@@ -112,7 +114,7 @@
             "mainClass": "btools.mapcreator.WayCutter",
             "projectName": "brouter-map-creator",
             "vmArgs": "-DuseDenseMaps=true",
-            "args": "/home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/ftiles /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/ways2.dat /home/scarapella/dev/brouter/brouter-master/misc/scripts/mapcreation/tmp/waytiles"
+            "args": "/home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/ftiles /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/ways2.dat /home/scarapella/dev/brouter/brouter/misc/scripts/mapcreation/tmp/waytiles"
         },
         {
             "type": "java",
