@@ -142,11 +142,21 @@ CHECKPOINT_FILE=".process_pbf_checkpoint"
 TODAY=$(date +%Y-%m-%d)
 
 # Convert TMP_BACKUP_DIR to absolute path if provided and scope by planet file and date
+# Detect if TMP_BACKUP_DIR is a GCS bucket
+IS_GCS_BUCKET=false
 if [[ -n "$TMP_BACKUP_DIR" ]]; then
-    TMP_BACKUP_DIR=$(realpath "$TMP_BACKUP_DIR")
+    if [[ "$TMP_BACKUP_DIR" == gs://* ]]; then
+        IS_GCS_BUCKET=true
+        echo "Detected Google Cloud Storage bucket: $TMP_BACKUP_DIR"
+    else
+        TMP_BACKUP_DIR=$(realpath "$TMP_BACKUP_DIR")
+    fi
     PLANET_FILENAME=$(basename "$PLANET_FILE")
     TMP_BACKUP_DIR_DATED="${TMP_BACKUP_DIR}/${PLANET_FILENAME}/${TODAY}"
-    mkdir -p "$TMP_BACKUP_DIR_DATED"
+
+    if [[ "$IS_GCS_BUCKET" == false ]]; then
+        mkdir -p "$TMP_BACKUP_DIR_DATED"
+    fi
     echo "Using backup directory: $TMP_BACKUP_DIR_DATED"
 fi
 
@@ -156,10 +166,19 @@ if [[ ! -d tmp ]]; then
 fi
 
 # If backup directory exists for today, restore from it first
-if [[ -n "$TMP_BACKUP_DIR_DATED" && -d "$TMP_BACKUP_DIR_DATED" ]]; then
-    echo "=== Found backup directory for ${TODAY}, restoring tmp data ==="
-    rsync -a "$TMP_BACKUP_DIR_DATED/" tmp/
-    echo "=== Restore complete ==="
+if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
+    if [[ "$IS_GCS_BUCKET" == true ]]; then
+        # Check if GCS backup exists
+        if gcloud storage ls "$TMP_BACKUP_DIR_DATED/" &>/dev/null; then
+            echo "=== Found GCS backup for ${TODAY}, restoring tmp data ==="
+            gcloud storage rsync --recursive --delete-unmatched-destination-objects "$TMP_BACKUP_DIR_DATED/" tmp/
+            echo "=== Restore complete ==="
+        fi
+    elif [[ -d "$TMP_BACKUP_DIR_DATED" ]]; then
+        echo "=== Found backup directory for ${TODAY}, restoring tmp data ==="
+        rsync -a --delete "$TMP_BACKUP_DIR_DATED/" tmp/
+        echo "=== Restore complete ==="
+    fi
 fi
 
 cd tmp
@@ -188,7 +207,11 @@ if [[ "$CHECKPOINT" -lt 1 ]]; then
     # Backup tmp directory if TMP_BACKUP_DIR is set
     if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
         echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
-        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        if [[ "$IS_GCS_BUCKET" == true ]]; then
+            gcloud storage rsync --recursive --delete-unmatched-destination-objects ./ "$TMP_BACKUP_DIR_DATED/"
+        else
+            rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        fi
         echo "=== Backup complete ==="
     fi
 
@@ -211,7 +234,11 @@ if [[ "$CHECKPOINT" -lt 2 ]]; then
     # Backup tmp directory if TMP_BACKUP_DIR is set
     if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
         echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
-        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        if [[ "$IS_GCS_BUCKET" == true ]]; then
+            gcloud storage rsync --recursive --delete-unmatched-destination-objects ./ "$TMP_BACKUP_DIR_DATED/"
+        else
+            rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        fi
         echo "=== Backup complete ==="
     fi
 
@@ -231,7 +258,11 @@ if [[ "$CHECKPOINT" -lt 3 ]]; then
     # Backup tmp directory if TMP_BACKUP_DIR is set
     if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
         echo "=== Backing up tmp directory to $TMP_BACKUP_DIR_DATED ==="
-        rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        if [[ "$IS_GCS_BUCKET" == true ]]; then
+            gcloud storage rsync --recursive --delete-unmatched-destination-objects ./ "$TMP_BACKUP_DIR_DATED/"
+        else
+            rsync -a --delete ./ "$TMP_BACKUP_DIR_DATED/"
+        fi
         echo "=== Backup complete ==="
     fi
 
@@ -263,7 +294,11 @@ rm -f "$CHECKPOINT_FILE"
 # Clean up backup directory if it was used
 if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
     echo "Cleaning up backup directory: $TMP_BACKUP_DIR_DATED"
-    rm -rf "$TMP_BACKUP_DIR_DATED"
+    if [[ "$IS_GCS_BUCKET" == true ]]; then
+        gcloud storage rm --recursive "$TMP_BACKUP_DIR_DATED/"
+    else
+        rm -rf "$TMP_BACKUP_DIR_DATED"
+    fi
 fi
 
 echo "Process completed successfully."
