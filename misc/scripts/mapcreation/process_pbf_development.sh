@@ -2,37 +2,16 @@
 set -e
 cd "$(dirname "$0")"
 
+OUTPUT_DIR=""
+JAVA_ARGS=""
+PLANET_FILE_ARG=""
 AVOID_MAP_POLLING=false
-DELETE_TMP_FILES=true
 SRTM_PATH="./srtm3_bef/"
-BROUTER_PROFILES="../../profiles2"
 TMP_BACKUP_DIR=""
 DELETE_TMP_FILES=true
 
 
 usage() {
-  echo "Usage:    ./process_pbf_development.sh <planet-file> [--output-dir <directory>] [--java-args <args>]" >&2
-  echo "                      [--srtm-dir <directory>] [--profiles-dir <directory>] [--avoid-map-polling] " >&2
-  echo " " >&2
-  echo "Example:  ./process_pbf_development.sh planet-latest.osm.pbf --output-dir ../../segments4/ " >&2
-  echo "                    --java-args '-Xmx8G -Xms4G' --srtm-dir ../../srtm_bef3/ " >&2
-  echo "                    --profiles-dir ../../profiles2/  --avoid-map-polling " >&2
-  exit 1
-}
-
-parse_option() {
-  local opt="$1" opt_next="$2" var="$3" desc="$4"
-  if [[ "$opt" == *=* ]]; then
-    eval "$var=\"${opt#*=}\""
-    echo 1
-  else
-    if [[ -z "$opt_next" || "$opt_next" == --* ]]; then
-      echo "Error: $opt requires $desc" >&2
-      usage
-    fi
-    eval "$var=\"$opt_next\""
-    echo 2
-  fi
   echo "" >&2
   echo "Usage: process_pbf_development.sh <planet-file> [options...]" >&2
   echo "--output-dir <directory>     Location to store the .rd5 segment files" >&2
@@ -46,6 +25,11 @@ parse_option() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output-dir)
+      if [[ -z "$2" || "$2" == --* ]]; then
+        echo "Error: --output-dir requires a directory path" >&2
+        usage
+        exit 1
+      fi
       OUTPUT_DIR="$2"
       shift 2
       ;;
@@ -75,15 +59,24 @@ while [[ $# -gt 0 ]]; do
       SRTM_PATH="$2"
       shift 2
       ;;
+    --srtm-dir=*)
+      SRTM_PATH="${1#*=}"
+      shift
+      ;;
     --java-args)
+      if [[ -z "$2" || "$2" == --* ]]; then
+        echo "Error: --java-args requires Java arguments" >&2
+        usage
+        exit 1
+      fi
       JAVA_ARGS="$2"
       shift 2
       ;;
-    --java-profiles)
-      PROFILES_DIR="$2"
-      shift 2
+    --java-args=*)
+      JAVA_ARGS="${1#*=}"
+      shift
       ;;
-      --avoid-map-polling)
+    --avoid-map-polling)
       AVOID_MAP_POLLING=true
       shift
       ;;
@@ -93,31 +86,28 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       usage
+      exit 0
       ;;
     *)
-      if [[ -z "$PLANET_FILE" ]]; then
-        PLANET_FILE="$1"
+      if [[ -z "$PLANET_FILE_ARG" ]]; then
+        PLANET_FILE_ARG="$1"
         shift
       else
         echo "Error: unexpected argument '$1'" >&2
         usage
+        exit 1
       fi
       ;;
   esac
 done
 
-if [[ ! -f "$PLANET_FILE" ]]; then
-	echo "Error: planet file '$PLANET_FILE' not found" >&2
-  echo "" >&2
+if [[ -z "$PLANET_FILE_ARG" ]]; then
+  echo "Error: planet file path required" >&2
   usage
+  exit 1
 fi
 
 SRTM_PATH=$(realpath "$SRTM_PATH")
-PLANET_FILE=$(realpath "./$PLANET_FILE")
-BROUTER_PROFILES=$(realpath "$BROUTER_PROFILES")
-
-
-JAVA_EXEC="java $JAVA_ARGS"
 PLANET_FILE=$(realpath "./$PLANET_FILE_ARG")
 
 if [[ ! -f "$PLANET_FILE" ]];
@@ -144,16 +134,6 @@ if [[ ! -f "$BROUTER_JAR" ]];
 	then echo "Error: Brouter jar file '$BROUTER_JAR' not found" >&2
     exit 1
 fi
-echo "BROUTER_JAR:        $BROUTER_JAR"
-echo "PLANET_FILE:        $PLANET_FILE"
-echo "SRTM_PATH:          $SRTM_PATH"
-echo "BROUTER_PROFILES:   $BROUTER_PROFILES"
-echo "OUTPUT_DIR:         $OUTPUT_DIR"
-echo "JAVA_ARGS:          $JAVA_ARGS"
-echo "AVOID_MAP_POLLING:  $AVOID_MAP_POLLING'"
-
-rm -rf tmp
-mkdir tmp
 echo  "Using Brouter jar file '$BROUTER_JAR'"
 
 
@@ -211,6 +191,8 @@ CHECKPOINT=$(echo "$CHECKPOINT_DATA" | awk '{print $2}')
 # If checkpoint is from a different day, reset to 0
 if [[ "$CHECKPOINT_DATE" != "$TODAY" ]]; then
     echo "=== Checkpoint from $CHECKPOINT_DATE is expired. Starting fresh. ==="
+    #clean up tmp dir
+    rm -rf ./*
     CHECKPOINT=0
     echo "$TODAY 0" > "../$CHECKPOINT_FILE"
 else
@@ -222,21 +204,6 @@ if [[ "$CHECKPOINT" -lt 1 ]]; then
     echo "=== Running Step 1: OsmFastCutter ==="
     mkdir -p nodetiles waytiles waytiles55 nodes55
 
-echo "Executing: OsmFastCutter"
-${JAVA_EXEC} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING} \
-btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat \
-relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
-
-echo "Executing: PosUnifier"
-mkdir unodes55
-${JAVA_EXEC} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING} \
-btools.util.StackSampler btools.mapcreator.PosUnifier nodes55 unodes55 bordernids.dat bordernodes.dat ${SRTM_PATH}
-
-echo "Executing: WayLinker"
-mkdir segments
-${JAVA_EXEC} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -DuseDenseMaps=true -DskipEncodingCheck=true \
-btools.util.StackSampler btools.mapcreator.WayLinker unodes55 waytiles55 bordernodes.dat restrictions.dat ${BROUTER_PROFILES}/lookups.dat \
-${BROUTER_PROFILES}/all.brf segments rd5
     ${JAVA} -cp ${BROUTER_JAR} -cp ${BROUTER_JAR} -Ddeletetmpfiles=${DELETE_TMP_FILES} -DuseDenseMaps=true -DavoidMapPolling=${AVOID_MAP_POLLING}  btools.util.StackSampler btools.mapcreator.OsmFastCutter ${BROUTER_PROFILES}/lookups.dat nodetiles waytiles nodes55 waytiles55  bordernids.dat  relations.dat  restrictions.dat  ${BROUTER_PROFILES}/all.brf ${BROUTER_PROFILES}/trekking.brf ${BROUTER_PROFILES}/softaccess.brf ${PLANET_FILE}
 
     # Backup tmp directory if TMP_BACKUP_DIR is set
