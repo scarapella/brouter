@@ -7,7 +7,7 @@ assign avoid_yes 		  = 2
 assign number_portage_carries = 2				  # %number_portage_carries% | How many carries of gear+boat do you typically do when not using a portage cart? | number
 assign use_portage_cart			  = false		  # %use_portage_cart% | Will you use a portage cart when possible? | boolean
 assign max_rapids             = 3    		  # %max_rapids% | Maximum class of rapids you are willing to run? | [0=Avoid all known rapids, 1=Class I, 2=Class II, 3=Classs III, 4=Class IV, 5=Class V]
-assign max_upstream_rapids    = 2    		  # %max_upstream_rapids% | Maximum class of rapids you are willing to ascend? | [0=Avoid all known rapids, 1=Class I, 2=Class II, 3=Classs III, 4=Class IV, 5=Class V]
+assign max_upstream_rapids    = 3    		  # %max_upstream_rapids% | Maximum class of rapids you are willing to ascend? | [0=Avoid all known rapids, 1=Class I, 2=Class II, 3=Classs III, 4=Class IV, 5=Class V]
 assign default_unknown_rapids	= 3				  # %default_unknown_rapids% | What is the default class to use for unspecified rapids? | [1=Class I, 2=Class II, 3=Classs III, 4=Class IV, 5=Class V]
 assign allow_upstream_travel	= true		  # %allow_upstream_travel% | Allow upstream travel? | boolean
 assign avoid_open_water			  = avoid_no	# %avoid_open_water% | Avoid open water? |[avoid_no=Do not avoid, avoid_prefer=Prefer to avoid, avoid_yes=Always avoid]
@@ -119,6 +119,7 @@ assign portageableway
 	if highway=platform|proposed|rest_area then false
 	else true
   )
+  else if man_made=pier then true
   else false
 
 #calculate logical portage access
