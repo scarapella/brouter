@@ -12,6 +12,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import btools.expressions.BExpressionContextNode;
@@ -19,6 +20,26 @@ import btools.expressions.BExpressionContextWay;
 import btools.expressions.BExpressionMetaData;
 
 public class OsmCutter extends MapCreatorBase {
+  private static final class MultipolygonCollector extends MapCreatorBase {
+    private final Map<Long, Map<String, String>> wayTags = new HashMap<>();
+
+    @Override
+    public void nextRelation(RelationData relation) {
+      if (!"multipolygon".equals(relation.getTag("type")) || !"water".equals(relation.getTag("natural"))) {
+        return;
+      }
+      for (int i = 0; i < relation.ways.size(); i++) {
+        long wayId = relation.ways.get(i);
+        Map<String, String> tags = wayTags.computeIfAbsent(wayId, ignored -> new HashMap<>());
+        for (Map.Entry<String, String> entry : relation.getTagsOrNull().entrySet()) {
+          if (!"type".equals(entry.getKey())) {
+            tags.put(entry.getKey(), entry.getValue());
+          }
+        }
+      }
+    }
+  }
+
   private long recordCnt;
   private long nodesParsed;
   private long waysParsed;
@@ -32,6 +53,7 @@ public class OsmCutter extends MapCreatorBase {
   public WayCutter wayCutter;
   public RestrictionCutter restrictionCutter;
   public NodeFilter nodeFilter;
+  private Map<Long, Map<String, String>> multipolygonWayTags;
 
   private DatabasePseudoTagProvider dbPseudoTagProvider;
 
@@ -72,6 +94,10 @@ public class OsmCutter extends MapCreatorBase {
     this.outTileDir = outTileDir;
     if (!outTileDir.isDirectory())
       throw new RuntimeException("out tile directory " + outTileDir + " does not exist");
+
+    MultipolygonCollector multipolygonCollector = new MultipolygonCollector();
+    new OsmParser().readMap(mapFile, multipolygonCollector, multipolygonCollector, multipolygonCollector);
+    multipolygonWayTags = multipolygonCollector.wayTags;
 
     wayDos = wayFile == null ? null : new DataOutputStream(new BufferedOutputStream(new FileOutputStream(wayFile)));
     cyclewayDos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(relFile)));
@@ -175,6 +201,14 @@ public class OsmCutter extends MapCreatorBase {
   public void nextWay(WayData w) throws Exception {
     waysParsed++;
     checkStats();
+
+    Map<String, String> relationTags = multipolygonWayTags == null ? null : multipolygonWayTags.get(w.wid);
+    if (relationTags != null) {
+      if (w.getTagsOrNull() == null) {
+        w.setTags(new HashMap<>());
+      }
+      w.getTagsOrNull().putAll(relationTags);
+    }
 
     // encode tags
     if (w.getTagsOrNull() == null) return;
