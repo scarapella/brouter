@@ -143,4 +143,17 @@ public class OsmParser extends MapCreatorBase {
     }
   }
 
+  public boolean hasNodeListener() {
+    return nListener != null;
+  }
+
+  public boolean hasWayListener() {
+    return wListener != null;
+  }
+
+  public boolean hasRelationListener() {
+    return rListener != null;
+  }
+
+
 }

@@ -96,7 +96,7 @@ public class OsmCutter extends MapCreatorBase {
       throw new RuntimeException("out tile directory " + outTileDir + " does not exist");
 
     MultipolygonCollector multipolygonCollector = new MultipolygonCollector();
-    new OsmParser().readMap(mapFile, multipolygonCollector, multipolygonCollector, multipolygonCollector);
+    new OsmParser().readMap(mapFile, null, null, multipolygonCollector);
     multipolygonWayTags = multipolygonCollector.wayTags;
 
     wayDos = wayFile == null ? null : new DataOutputStream(new BufferedOutputStream(new FileOutputStream(wayFile)));

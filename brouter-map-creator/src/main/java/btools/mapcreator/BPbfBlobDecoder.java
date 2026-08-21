@@ -248,10 +248,18 @@ public class BPbfBlobDecoder {
     BPbfFieldDecoder fieldDecoder = new BPbfFieldDecoder(block);
 
     for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-      processNodes(primitiveGroup.getDense(), fieldDecoder);
-      processNodes(primitiveGroup.getNodesList(), fieldDecoder);
-      processWays(primitiveGroup.getWaysList(), fieldDecoder);
-      processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+      if (parser.hasNodeListener()) {
+        processNodes(primitiveGroup.getDense(), fieldDecoder);
+      }
+      if (parser.hasNodeListener()) {
+        processNodes(primitiveGroup.getNodesList(), fieldDecoder);
+      }
+      if (parser.hasWayListener()) {
+        processWays(primitiveGroup.getWaysList(), fieldDecoder);
+      }
+      if (parser.hasRelationListener()) {
+        processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+      }
     }
   }
 
