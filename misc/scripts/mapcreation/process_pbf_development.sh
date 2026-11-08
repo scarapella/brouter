@@ -9,6 +9,7 @@ AVOID_MAP_POLLING=false
 SRTM_PATH="./srtm3_bef/"
 TMP_BACKUP_DIR=""
 DELETE_TMP_FILES=true
+SKIP_IF_NEWER=false
 
 
 usage() {
@@ -19,6 +20,7 @@ usage() {
   echo "--avoid-map-polling          Avoid polling of files, (necessary for small pbf files)">&2
   echo "--srtm-dir <directory>       Directory containing SRTM data" >&2
   echo "--tmp-backup-dir <directory> Used to store tmp files in a persistent place for resuming processing" >&2
+  echo "--skip-if-newer              Skip if segments are at least as new as the PBF" >&2
   echo "--help                       Show this help message" >&2
 }
 
@@ -80,6 +82,10 @@ while [[ $# -gt 0 ]]; do
       AVOID_MAP_POLLING=true
       shift
       ;;
+    --skip-if-newer)
+      SKIP_IF_NEWER=true
+      shift
+      ;;
     --force-failure)
       FORCE_FAILURE=true
       shift
@@ -113,6 +119,20 @@ PLANET_FILE=$(realpath "./$PLANET_FILE_ARG")
 if [[ ! -f "$PLANET_FILE" ]];
 	then echo "Error: planet file '$PLANET_FILE' not found" >&2
 	exit 1
+fi
+
+PLANET_FILENAME=$(basename "$PLANET_FILE")
+if [[ -n "$OUTPUT_DIR" ]]; then
+  OUTPUT_DIR=$(realpath -m "$OUTPUT_DIR")
+  SEGMENTS_OUTPUT_DIR="$OUTPUT_DIR"
+else
+  SEGMENTS_OUTPUT_DIR="$(pwd)/tmp/segments"
+fi
+PROCESSED_MARKER="$SEGMENTS_OUTPUT_DIR/$PLANET_FILENAME.processed"
+
+if [[ "$SKIP_IF_NEWER" == true && -f "$PROCESSED_MARKER" && ! "$PLANET_FILE" -nt "$PROCESSED_MARKER" ]]; then
+  echo "Skipping processing: $PROCESSED_MARKER is at least as new as $PLANET_FILE"
+  exit 0
 fi
 
 
@@ -302,5 +322,8 @@ if [[ -n "$TMP_BACKUP_DIR_DATED" ]]; then
         rm -rf "$TMP_BACKUP_DIR_DATED"
     fi
 fi
+
+mkdir -p "$SEGMENTS_OUTPUT_DIR"
+touch "$PROCESSED_MARKER"
 
 echo "Process completed successfully."
